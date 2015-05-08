@@ -5,6 +5,14 @@ Arduino based Solar Tracker System Design
 Author: Ubani Balogun
 
 TODO: Describe Program code
+----------------------------------------------------
+
+           PhotoR     10K
+ +5    o---/\/\/--.--/\/\/---o GND
+                  |
+ Pin A0 o----------
+
+----------------------------------------------------
 
 */
 
@@ -59,26 +67,29 @@ void setup(){
  
   // Setup Servo
   myservo.attach(servoPin);
-
   // Setup Serial communication for test
   Serial.begin(9600);
 }
 
 
 void loop(){
-  //int sensorReading;
-  //sensorReading = readSensor();
   Serial.println("======================NEW ROUND======================");
-  while (Serial.available() == 0);
-  if (Serial.available() > 0){
-    incoming = Serial.parseInt();
-    Serial.print("Ideal angle: "); Serial.println(incoming,DEC);
-    adjustActuator(incoming);
-    delay(2000);
-  }
-  Serial.println("ACTUATOR STATUS");
-  Serial.print("FRONT AC: ");Serial.println(FRONT_AC_1[HEIGHT]);
-  Serial.print("BACK AC: "); Serial.println(BACK_AC_1[HEIGHT]);
+  int sensorReading;
+  sensorReading = readSensor();
+  Serial.print("Ideal Angle: ");Serial.println(sensorReading);
+  adjustActuator(sensorReading);
+  delay(2000);
+  
+//  while (Serial.available() == 0);
+//  if (Serial.available() > 0){
+//    incoming = Serial.parseInt();
+//    Serial.print("Ideal angle: "); Serial.println(incoming,DEC);
+//    adjustActuator(incoming);
+//    delay(2000);
+//  }
+//  Serial.println("ACTUATOR STATUS");
+//  Serial.print("FRONT AC: ");Serial.println(FRONT_AC_1[HEIGHT]);
+//  Serial.print("BACK AC: "); Serial.println(BACK_AC_1[HEIGHT]);
 //  extendActuator(FRONT_AC_1);
 //  extendActuator(FRONT_AC_2);
 //  delay(80);
