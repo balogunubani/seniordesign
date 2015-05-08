@@ -28,11 +28,9 @@ const int photoR = A0;
 
 
 // Indexes for Actuator wires and height
-const int RED = 0;
-const int BLACK = 1;
+const int RED = 0, FALSE = 0, LEAD = 0;
+const int BLACK = 1, TRUE = 1, FOLLOW = 1;
 const int HEIGHT = 2;
-const int TRUE = 1;
-const int FALSE = 0;
 
 // Common constants
 const int DELAY = 2000;
@@ -73,9 +71,36 @@ void loop(){
   Serial.println("======================NEW ROUND======================");
   while (Serial.available() == 0);
   if (Serial.available() > 0){
-    incoming = Serial.read();
-    Serial.print("Ideal angle: "); Serial.println(incoming - '0',DEC);
+    incoming = Serial.parseInt();
+    Serial.print("Ideal angle: "); Serial.println(incoming,DEC);
+    adjustActuator(incoming);
+    delay(2000);
   }
+  Serial.println("ACTUATOR STATUS");
+  Serial.print("FRONT AC: ");Serial.println(FRONT_AC_1[HEIGHT]);
+  Serial.print("BACK AC: "); Serial.println(BACK_AC_1[HEIGHT]);
+//  extendActuator(FRONT_AC_1);
+//  extendActuator(FRONT_AC_2);
+//  delay(80);
+//  stopActuator(FRONT_AC_1);
+//  stopActuator(FRONT_AC_2);
+//  delay(1500);
+//  extendActuator(BACK_AC_1);
+//  extendActuator(BACK_AC_2);
+//  delay(80);
+//  stopActuator(BACK_AC_1);
+//  stopActuator(BACK_AC_2);
+//  delay(1500);
+//  retractActuator(BACK_AC_1);
+//  retractActuator(BACK_AC_2);
+//  retractActuator(FRONT_AC_1);
+//  retractActuator(FRONT_AC_2);
+//  delay(80);
+//  stopActuator(BACK_AC_1);
+//  stopActuator(BACK_AC_2);
+//  stopActuator(FRONT_AC_1);
+//  stopActuator(FRONT_AC_2);
+//  delay(1500);
 }
 
 
@@ -153,55 +178,71 @@ int adjustActuator(int ideal){
   */
   int side, prevH, newH, diffH;
   int *ac_set_up[2], *ac_set_down[2];
-  side = (ideal - 90) > 0;
-  if (side == TRUE){
+  side = (ideal - 90); 
+  if (side > 0){
     prevH = FRONT_AC_1[HEIGHT];
-    ac_set_up[0] = FRONT_AC_1;
-    ac_set_up[1] = FRONT_AC_2;
-    ac_set_down[0] = BACK_AC_1;
-    ac_set_down[1] = BACK_AC_2;
-  }else{
+    ac_set_up[LEAD] = FRONT_AC_1;
+    ac_set_up[FOLLOW] = FRONT_AC_2;
+    ac_set_down[LEAD] = BACK_AC_1;
+    ac_set_down[FOLLOW] = BACK_AC_2;
+    Serial.println("FRONT ACTUATORS TO MOVE UP");
+  }else if(side < 0){
     prevH = BACK_AC_1[HEIGHT];
-    ac_set_up[0] = BACK_AC_1;
-    ac_set_up[0] = BACK_AC_2;
-    ac_set_down[0] = FRONT_AC_1;
-    ac_set_down[0] = FRONT_AC_2;
+    ac_set_up[LEAD] = BACK_AC_1;
+    ac_set_up[FOLLOW] = BACK_AC_2;
+    ac_set_down[LEAD] = FRONT_AC_1;
+    ac_set_down[FOLLOW] = FRONT_AC_2;
+    Serial.println("BACK ACTUATORS TO MOVE UP");
+  }else{
+    retractActuator(BACK_AC_1);
+    retractActuator(BACK_AC_2);
+    retractActuator(FRONT_AC_1);
+    retractActuator(FRONT_AC_2);
+    delay(1500);
+    BACK_AC_1[HEIGHT] = 0;
+    BACK_AC_2[HEIGHT] = 0;
+    FRONT_AC_1[HEIGHT] = 0;
+    FRONT_AC_2[HEIGHT] = 0;
+    return 0;
   }
+  
   Serial.print("prevH: ");Serial.println(prevH);
   float scaled = ideal / S_A_RATIO;
   Serial.print("scaled: ");Serial.println(scaled);
   newH = (int) (ANGLE_TO_HEIGHT * 1000 * scaled / HEIGHT_TO_DELAY);
-  Serial.print("NewH: ");Serial.println(newH);
+  Serial.print("NewH: ");Serial.println(newH);  
   diffH = newH - prevH;
-  Serial.print("diffH: ");Serial.println(diffH);
-  if (diffH < 0){
-    diffH = diffH * -1;
-    // move actuator up
-    extendActuator(ac_set_up[0]);
-    extendActuator(ac_set_up[1]);
+  Serial.print("diffH before abs: ");Serial.println(diffH);
+  if (diffH > 0){
+    Serial.print("diffH: ");Serial.println(diffH);
+//    move actuator up
+    extendActuator(ac_set_up[LEAD]);
+    extendActuator(ac_set_up[FOLLOW]);
     delay(diffH);
-    stopActuator(ac_set_up[0]);
-    stopActuator(ac_set_up[1]);
+    stopActuator(ac_set_up[LEAD]);
+    stopActuator(ac_set_up[FOLLOW]);
   }else{
-    // move actuator down
-    retractActuator(ac_set_up[0]);
-    retractActuator(ac_set_up[0]);
+//    move actuator down
+    diffH = abs(diffH);
+    retractActuator(ac_set_up[LEAD]);
+    retractActuator(ac_set_up[FOLLOW]);
     delay(diffH);
-    stopActuator(ac_set_up[0]);
-    stopActuator(ac_set_up[1]);
+    stopActuator(ac_set_up[LEAD]);
+    stopActuator(ac_set_up[FOLLOW]);
   }
   // Set new Actuator height  
-  ac_set_up[0][HEIGHT] = newH;
-  Serial.print("ac_set_up[0][HEIGHT]: ");Serial.println(ac_set_up[0][HEIGHT]);
-  int downH = ac_set_down[0][HEIGHT];
+  ac_set_up[LEAD][HEIGHT] = newH;
+  Serial.print("ac_set_up[LEAD][HEIGHT]: ");Serial.println(ac_set_up[LEAD][HEIGHT]);
+  Serial.print("before downH: ");Serial.println(ac_set_down[LEAD][HEIGHT]);
+  int downH = ac_set_down[LEAD][HEIGHT];
   if (downH != 0){
-    retractActuator(ac_set_down[0]);
-    retractActuator(ac_set_down[1]);
+    retractActuator(ac_set_down[LEAD]);
+    retractActuator(ac_set_down[FOLLOW]);
     delay(downH + 100);
-    stopActuator(ac_set_down[0]);
-    stopActuator(ac_set_down[1]);
-    ac_set_down[0][HEIGHT] = 0;  
+    stopActuator(ac_set_down[LEAD]);
+    stopActuator(ac_set_down[FOLLOW]);
+    ac_set_down[LEAD][HEIGHT] = 0;  
+    Serial.print("ac_set_down[LEAD][HEIGHT]: ");Serial.println(ac_set_down[LEAD][HEIGHT]);
   }
-  Serial.print("ac_set_down[0][HEIGHT]: ");Serial.println(ac_set_down[0][HEIGHT]);
   return 0;
 }
