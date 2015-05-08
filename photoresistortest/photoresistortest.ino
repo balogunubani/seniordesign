@@ -25,7 +25,7 @@ void setup(){
 
 
 void loop(){
-  printf("%l",analogRead(photoResistor));
+  Serial.println(analogRead(photoResistor));
   delay(1000);
 }
 
