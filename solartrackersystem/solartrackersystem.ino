@@ -27,7 +27,7 @@ int BACK_AC_2[3] = {7,6,0};
 // Consider substituting below values with calcualtions
 const int AC_DISTANCE = 11;
 const int AC_HALF_RANGE = 7;
-const float S_A_RATIO = 12.0;
+const float S_A_RATIO = 6.0;
 const float ANGLE_TO_HEIGHT = 0.2;
 const float HEIGHT_TO_DELAY  = 2.0;
 
@@ -78,15 +78,15 @@ void loop(){
   sensorReading = readSensor();
   Serial.print("Ideal Angle: ");Serial.println(sensorReading);
   adjustActuator(sensorReading);
-  delay(2000);
-  
+  delay(5000);
+//  
 //  while (Serial.available() == 0);
 //  if (Serial.available() > 0){
 //    incoming = Serial.parseInt();
 //    Serial.print("Ideal angle: "); Serial.println(incoming,DEC);
 //    adjustActuator(incoming);
-//    delay(2000);
-//  }
+////    delay(2000); 
+//}
 //  Serial.println("ACTUATOR STATUS");
 //  Serial.print("FRONT AC: ");Serial.println(FRONT_AC_1[HEIGHT]);
 //  Serial.print("BACK AC: "); Serial.println(BACK_AC_1[HEIGHT]);
@@ -146,7 +146,21 @@ void calibrateActuator(const int actuator[]){
   stopActuator(actuator);
 }
 
+
+
+
 // Sweeps the sensor 180 degrees, reading light intensities and returns the angle of the highest intensity
+// See Sensor Diagram below
+/*
+----------------------------------------------------
+
+           PhotoR     10K
+ +5    o---/\/\/--.--/\/\/---o GND
+                  |
+ Pin A0 o----------
+
+----------------------------------------------------
+*/
 int readSensor(){
   int intens = 0;
   int maxPos = 0;
@@ -165,6 +179,11 @@ int readSensor(){
   myservo.write(finalPos);
   return finalPos;
 }
+
+
+
+
+
 
 // Adjusts the linear actuators to the ideal position as indicated by the input
 int adjustActuator(int ideal){
@@ -218,7 +237,7 @@ int adjustActuator(int ideal){
   }
   
   Serial.print("prevH: ");Serial.println(prevH);
-  float scaled = ideal / S_A_RATIO;
+  float scaled = abs(ideal - 90) / S_A_RATIO;
   Serial.print("scaled: ");Serial.println(scaled);
   newH = (int) (ANGLE_TO_HEIGHT * 1000 * scaled / HEIGHT_TO_DELAY);
   Serial.print("NewH: ");Serial.println(newH);  
